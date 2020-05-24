@@ -1,8 +1,9 @@
 from keras_preprocessing.sequence import pad_sequences
 from scipy.io import wavfile
 from sklearn.model_selection import cross_val_score, GridSearchCV
-from sklearn.svm import SVC
-from sklearn import metrics, svm
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC, LinearSVR
+from sklearn import metrics, svm, preprocessing
 import glob
 import numpy as np
 import os
@@ -17,8 +18,8 @@ import winsound
 train_number = 8000
 # Actual number train_number = 3000
 test_number = 3000
-# Actual number train_number = 3000
-valid_number = 5000
+# Actual number train_number = 1000
+valid_number = 1000
 
 # Train Read
 train_names = []
@@ -91,6 +92,10 @@ valid_labels = np.array(valid_labels)
 
 # Model
 
+# sc = StandardScaler()
+# train_data = sc.fit_transform(train_data)
+# test_data = sc.transform(test_data)
+
 # C_grid = [1e-11,1e-08, 1e-07, 0.000001, 0.00001, 0.0001, 0.001]
 # gamma_grid = [1e-11, 1e-07, 0.000001, 0.00001, 0.0001, 0.001]
 # # param_grid = {'C': C_grid, 'gamma' : gamma_grid, 'kernel': ('linear', 'rbf')}
@@ -111,7 +116,14 @@ valid_labels = np.array(valid_labels)
 # for mean, std, params in zip(means, stds, grid.cv_results_['params']):
 #     print("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
 
-model = LinearSVC(C=1e-11)
+
+# test_data = preprocessing.scale(test_data)
+# train_data = preprocessing.scale(train_data)
+
+train_data = np.concatenate((train_data, valid_data))
+train_labels = np.concatenate((train_labels, valid_labels))
+
+model =  LinearSVC(C = 1e-11)
 start = time.time()
 # model = RandomForestClassifier(min_samples_leaf=20)
 
@@ -129,7 +141,7 @@ print("Precizie:", metrics.accuracy_score(predictions, test_labels)*100, "%")
 with open('submission.csv', mode='w', newline='') as rez_file:
     rez_writer = csv.writer(rez_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
     rez_writer.writerow(['name', 'label'])
-    for i,j in zip(test_names, predictions):
+    for i, j in zip(test_names, predictions):
         rez_writer.writerow([i, j])
 #
 # plt.scatter(test_labels, predictions)
